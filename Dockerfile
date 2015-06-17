@@ -1,14 +1,20 @@
-# VERSION       1.0
+# sshd
+#
+# VERSION               0.0.2
 
-# use the cui base image provided by yimiyancui
-FROM index.alauda.cn/yimiyan/solr-tp-xc
+FROM ubuntu:14.04
+MAINTAINER Sven Dowideit <SvenDowideit@docker.com>
 
-MAINTAINER admin@love320.com
+RUN apt-get update && apt-get install -y openssh-server
+RUN mkdir /var/run/sshd
+RUN echo 'root:screencast' | chpasswd
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-# expose memcached port
-EXPOSE 80
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+ENV NOTVISIBLE "in users profile"
+RUN echo "export VISIBLE=now" >> /etc/profile
+
 EXPOSE 22
-EXPOSE 8320
-EXPOSE 807
-
-CMD   (sh /usr/local/tomcat8081/bin/startup.sh ) && (tail -f /usr/local/tomcat8081/logs/catalina.out)
+CMD ["/usr/sbin/sshd", "-D"]
